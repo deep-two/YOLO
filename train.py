@@ -63,7 +63,7 @@ def train(num_epoch, start_epoch=1, learning_rate, step=1, log_dir
         tepoch = tqdm(train_loader, unit="batch")
         
         for x_train, y_train in tepoch:
-            tepoch.set_description(f"Epoch {epoch+1}")
+            tepoch.set_description(f"Epoch {epoch}")
 
             x_train = x_train.to(device)
             y_train = y_train.to(device)
@@ -89,7 +89,7 @@ def train(num_epoch, start_epoch=1, learning_rate, step=1, log_dir
             tepoch.set_postfix(loss=loss.item(), accuracy=100. * acc)
             step += 1
             
-        print(f"Train. Epoch: {epoch + 1:d}, Loss: {np.mean(epoch_loss):1.5f}, acc: {np.mean(epoch_acc)*100 :1.5f}%")
+        print(f"Train. Epoch: {epoch :d}, Loss: {np.mean(epoch_loss):1.5f}, acc: {np.mean(epoch_acc)*100 :1.5f}%")
         
         
         if (epoch + 1) % 1 == 0:
@@ -111,13 +111,13 @@ def train(num_epoch, start_epoch=1, learning_rate, step=1, log_dir
                     
             validation_loss = np.mean(validation_loss)
             validation_acc = np.mean(validation_acc)
-            print("Val. Epoch: %d , val_loss: % 1.5f, val_acc: %1.5f  \n" % ((epoch+1), validation_loss, validation_acc))
+            print("Val. Epoch: %d , val_loss: % 1.5f, val_acc: %1.5f  \n" % (epoch, validation_loss, validation_acc))
             writer.add_scalar('val_acc', validation_acc, step)
             writer.add_scalar('val_loss', validation_loss, step)
             
             if val_loss < min_valid_loss:
                 min_valid_loss = val_loss
-                torch.save(model.state_dict(), f'{log_dir}/epoch{epoch+1:d}_valloss{min_valid_loss:.2f}.pth')    
+                torch.save(model.state_dict(), f'{log_dir}/epoch{epoch:d}_valloss{min_valid_loss:.2f}.pth')    
             
             model.train()
             
