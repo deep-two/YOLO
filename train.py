@@ -92,7 +92,7 @@ def train(num_epoch, start_epoch=1, learning_rate, step=1, log_dir
         print(f"Train. Epoch: {epoch :d}, Loss: {np.mean(epoch_loss):1.5f}, acc: {np.mean(epoch_acc)*100 :1.5f}%")
         
         
-        if (epoch + 1) % 1 == 0:
+        if epoch  % validation_epoch == 0:
             validation_loss = []
             validation_acc = []
             model.eval()
