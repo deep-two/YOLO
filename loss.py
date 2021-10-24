@@ -56,6 +56,7 @@ def get_loss(outputs: torch, gts, lambda_coordi=5, lambda_nobody = 0.5):
     ################################################
 
     class_num = 5
+    loss_list = []
     for batch in range(outputs.shape[0]):
         pred_boxes = outputs[batch].view([-1,5+class_num])
 
@@ -77,8 +78,10 @@ def get_loss(outputs: torch, gts, lambda_coordi=5, lambda_nobody = 0.5):
             else:
                 conf_error += torch.square(pred_boxes[idx][4]) * lambda_nobody
 
-    return lambda_coordi * coordi_error + conf_error + class_error
+        error = lambda_coordi * coordi_error + conf_error + class_error
+        loss_list.append(error)
 
+    return sum(loss_list)
 
     
     
