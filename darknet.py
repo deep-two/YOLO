@@ -29,7 +29,8 @@ class Darknet(nn.Module):
                                     nn.Conv2d(in_channels=512, out_channels=1024, kernel_size=3, stride=1, padding='same'),
                                     nn.Conv2d(in_channels=1024, out_channels=512, kernel_size=1, stride=1, padding='same'),
                                     nn.Conv2d(in_channels=512, out_channels=1024, kernel_size=3, stride=1, padding='same'),
-                                    nn.BatchNorm2d(num_features=1024), nn.MaxPool2d(kernel_size=2, stride=2))
+                                    nn.BatchNorm2d(num_features=1024))
+        self.conv6_maxpool = nn.MaxPool2d(kernel_size=2, stride=2)
 
         if self.pretrain is True:
             assert img_shape/(2**6) == int(img_shape/(2**6))
@@ -42,12 +43,13 @@ class Darknet(nn.Module):
         x = self.conv3(x)
         x = self.conv4(x)
         x = self.conv5(x)
-        x = self.conv6(x)
+        x6 = self.conv6(x)
+        x = self.conv6_maxpool(x6)
 
         if self.pretrain is True:
             x = self.pretrain_layer(x)
 
-        return x
+        return x6, x
 
 if __name__ == "__main__":
     _in = torch.FloatTensor([[[[0 for _ in range(2**6 * 13)] for _ in range(2**6 * 13)] for _ in range(3)] for _ in range(2)])
