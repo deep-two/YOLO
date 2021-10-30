@@ -115,8 +115,8 @@ def train(num_epoch, start_epoch=1, learning_rate, step=1, log_dir
             writer.add_scalar('val_acc', validation_acc, step)
             writer.add_scalar('val_loss', validation_loss, step)
             
-            if val_loss < min_valid_loss:
-                min_valid_loss = val_loss
+            if validation_loss < min_valid_loss:
+                min_valid_loss = validation_loss
                 torch.save(model.state_dict(), f'{log_dir}/epoch{epoch:d}_valloss{min_valid_loss:.2f}.pth')    
             
             model.train()
