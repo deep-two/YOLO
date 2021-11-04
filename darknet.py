@@ -54,7 +54,7 @@ class Darknet(nn.Module):
         return x5, x6
 
 
-class YOLO(nn.Module):
+class FineGrainedFeature(nn.Module):
     def __init__(self, anchor_info, classes):
         super().__init__()
         self.anchor_info = anchor_info
