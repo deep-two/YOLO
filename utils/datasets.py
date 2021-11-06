@@ -1,3 +1,5 @@
+import collections
+
 import cv2
 import numpy as np
 import pandas as pd
@@ -8,11 +10,34 @@ from torch.utils.data import Dataset, DataLoader
 from torchvision import transforms
 from torchvision.datasets import ImageNet, VOCDetection
 from torchvision.io import read_image
-from torch
+import torch
+import typing
 
 cv2.setNumThreads(0)
 cv2.ocl.setUseOpenCL(False)
 
+classes = [
+    "aeroplane",
+    "bicycle",
+    "bird",
+    "boat",
+    "bottle",
+    "bus",
+    "car",
+    "cat",
+    "chair",
+    "cow",
+    "diningtable",
+    "dog",
+    "horse",
+    "motorbike",
+    "person",
+    "pottedplant",
+    "sheep",
+    "sofa",
+    "train",
+    "tvmonitor"
+]
 
 class PascalVOCDataset(VOCDetection):
     def __init__(self, root="./data/pascal_voc",
@@ -53,11 +78,11 @@ class PascalVOCDataset(VOCDetection):
         # return image, label
         return image, target
 
-    def parse_voc_xml(self, node: ET.Element) -> Dict[str, Any]:  # xml 파일을 dictionary로 반환
-        voc_dict: Dict[str, Any] = {}
+    def parse_voc_xml(self, node: ET.Element) -> Dict[str, typing.Any]:  # xml 파일을 dictionary로 반환
+        voc_dict: Dict[str, typing.Any] = {}
         children = list(node)
         if children:
-            def_dic: Dict[str, Any] = collections.defaultdict(list)
+            def_dic: Dict[str, typing.Any] = collections.defaultdict(list)
             for dc in map(self.parse_voc_xml, children):
                 for ind, v in dc.items():
                     def_dic[ind].append(v)
