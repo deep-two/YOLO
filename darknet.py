@@ -1,6 +1,7 @@
 import torch
 import torch.nn as nn
 
+
 class Darknet(nn.Module):
     def __init__(self, img_shape, pretrain=False) -> None:
         super(Darknet, self).__init__()
@@ -54,25 +55,30 @@ class Darknet(nn.Module):
         return x5, x6
 
 
-class FineGrainedFeature(nn.Module):
-    def __init__(self, anchor_info, classes):
+
+class ReorgLayer(nn.Module):
+    def __init__(self, stride=2):
         super().__init__()
-        self.anchor_info = anchor_info
-        self.classes = classes
-        self.conv_layer  = nn.Conv2d()
+        self.stride = stride
 
-    def reorganize(self, feature):
-        feature1 = feature[:,:,0:13,0:13]
-        feature2 = feature[:,:,0:13,13:26]
-        feature3 = feature[:,:,13:26,0:13]
-        feature4 = feature[:,:,13:26,13:26]
-        return torch.cat([feature1,feature2, feature3, feature4], axis=1)
+    def forward(self, x):
+        stride = self.stride
+        b, c, h, w = x.size()
+        out_w, out_h, out_c = int(w / stride), int(h / stride), c * (stride * stride)
 
-    def forward(self, featuremap, output):
-        reorg_map = self.reorganize(featuremap)
-        new_feature_map = torch.cat([output, reorg_map], axis=1) # [batch, 3072, 13, 13] when input_size: 416
-        output = self.conv_layer(new_feature_map)
-        return output
+        x = reorganize(x, out_h, out_w)
+        return x
+
+
+
+def reorganize(feature, out_h, out_w):
+    feature1 = feature[:,:, 0:out_h, 0:out_w]
+    feature2 = feature[:,:, 0:out_h, out_w:]
+    feature3 = feature[:,:, out_h:, 0:out_w]
+    feature4 = feature[:,:, out_h:, out_w:]
+    return torch.cat([feature1,feature2, feature3, feature4], axis=1)
+
+
 
 
 
