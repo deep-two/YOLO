@@ -4,10 +4,11 @@ from typing import List
 
 import numpy as np
 import matplotlib.pyplot as plt
-from torch import rand, sigmoid, exp
+from torch import rand, sigmoid, exp, nn
 from torchvision import transforms
 
 from loss import bbox_iou
+from utils.datasets import PascalVOCDataset
 
 np.random.seed(42)
 
@@ -21,14 +22,13 @@ class DimensionCluster:
 
     def get_bbox(self):
         # Load Bbox Dataset
-
-        # Iteration Dataset and Get bbox width and height
-        boxes = np.random.rand(1000, 4)
+        boxes = PascalVOCDataset().get_bbox()
+        boxes = np.array(boxes)
         return boxes
 
     def kmeans(self) -> np.array:
         iteration = 0
-        max_iteration = 150
+        max_iteration = 15000
         loss_convergence = 1e-6
         n_boxes: int = len(self.boxes)
 
@@ -57,12 +57,14 @@ class DimensionCluster:
                 loss += min_distance
                 new_centroid[group_index][2] += box[2]
                 new_centroid[group_index][3] += box[3]
+
             for i in range(self.n_clusters):
                 new_centroid[i][2] /= len(groups[i])
                 new_centroid[i][3] /= len(groups[i])
 
             centroids = new_centroid
             iteration += 1
+            loss /= self.boxes.shape[0]
             print(loss)
             if abs(old_loss-loss) < loss_convergence or iteration > max_iteration:
                 break
@@ -80,8 +82,9 @@ class DimensionCluster:
         plt.show()
 
 
-class DirectLocation:
+class DirectLocation(nn.Module):
     def __init__(self, centroid):
+        super().__init__()
         self.anchor_box = self.get_anchor_box()
         self.n_anchor = len(self.anchor_box)
 
