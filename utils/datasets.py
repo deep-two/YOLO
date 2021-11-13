@@ -16,30 +16,35 @@ import typing
 cv2.setNumThreads(0)
 cv2.ocl.setUseOpenCL(False)
 
-classes = [
-    "aeroplane",
-    "bicycle",
-    "bird",
-    "boat",
-    "bottle",
-    "bus",
-    "car",
-    "cat",
-    "chair",
-    "cow",
-    "diningtable",
-    "dog",
-    "horse",
-    "motorbike",
-    "person",
-    "pottedplant",
-    "sheep",
-    "sofa",
-    "train",
-    "tvmonitor"
-]
+
 
 class PascalVOCDataset(VOCDetection):
+    CLASSES = [
+        "aeroplane",
+        "bicycle",
+        "bird",
+        "boat",
+        "bottle",
+        "bus",
+        "car",
+        "cat",
+        "chair",
+        "cow",
+        "diningtable",
+        "dog",
+        "horse",
+        "motorbike",
+        "person",
+        "pottedplant",
+        "sheep",
+        "sofa",
+        "train",
+        "tvmonitor"
+    ]
+
+    COLORS = np.random.randint(0, 255, size=(80, 3), dtype='uint8')
+
+
     def __init__(self, root="./data/pascal_voc",
                  image_set="train",
                  year="2012",
@@ -52,8 +57,9 @@ class PascalVOCDataset(VOCDetection):
 
     def __getitem__(self, index):
         # path, label = self.samples[index]
-        image = cv2.imread(self.images[index])
-        image = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
+        image = np.array(Image.open(self.images[index]).convert('RGB'))
+        # image = cv2.imread(self.images[index])
+        # image = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
 
         target = self.parse_voc_xml(ET.parse(self.annotations[index]).getroot())
 
@@ -62,21 +68,18 @@ class PascalVOCDataset(VOCDetection):
 
         for t in target['annotation']['object']:
             label = np.zeros(5)
-            label[:] = t['bndbox']['xmin'], t['bndbox']['ymin'], t['bndbox']['xmax'], t['bndbox']['ymax'], classes.index(t['name'])
+            label[:] = t['bndbox']['xmin'], t['bndbox']['ymin'], t['bndbox']['xmax'], t['bndbox']['ymax'], CLASSES.index(t['name'])
 
             targets.append(list(label[:4])) # 바운딩 박스 좌표
             labels.append(label[4])         # 바운딩 박스 클래스
 
         if self.transforms:
             augmentations = self.transforms(image=image, bboxes=targets)
-            img = augmentations['image']
+            image = augmentations['image']
             targets = augmentations['bboxes']
 
-        if self.transform is not None:
-            transformed = self.transform(image=image)
-            self.images = transformed["image"]
         # return image, label
-        return image, target
+        return image, targets, labels
 
     def parse_voc_xml(self, node: ET.Element) -> Dict[str, typing.Any]:  # xml 파일을 dictionary로 반환
         voc_dict: Dict[str, typing.Any] = {}
@@ -127,39 +130,3 @@ class ImageNetDataset(Dataset):
             image = transformed["image"]
 
         return image, label
-
-pascal_train_dataset = PascalVOCDataset(image_set="train")
-# pascal_trainval_dataset = PascalVOCDataset(image_set="trainval")
-# pascal_val_dataset = PascalVOCDataset(image_set="val")
-# imagenet_train_dataset = ImageNetDataset()
-
-print(pascal_train_dataset)
-# print(pascal_trainval_dataset)
-# print(pascal_val_dataset)
-# print(imagenet_train_dataset)
-
-pascal_train_dataloader = DataLoader(
-    pascal_train_dataset, batch_size=64, shuffle=True
-)
-#
-# pascal_trainval_dataloader = DataLoader(
-#     pascal_trainval_dataset, batch_size=64, shuffle=True
-# )
-
-# imagenet_train_dataloader = DataLoader(
-#     imagenet_train_dataset, batch_size=64, shuffle=True
-# )
-
-train_images, train_targets, train_annotations = next(iter(pascal_train_dataloader))
-# train_features, train_labels = iter(pascal_train_dataloader)
-print(f"Images batch shape: {len(train_images)}")
-# print(f"Target batch shape: {train_targets.size()}")
-# print(f"Annotations batch shape: {train_annotations.size()}")
-
-print(train_images)
-img = train_images[0].squeeze()
-label = train_annotations[0]
-
-plt.imshow(img, cmap="gray")
-plt.show()
-print(f"Label: {label}")
