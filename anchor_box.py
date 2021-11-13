@@ -18,12 +18,16 @@ class DimensionCluster:
         self.n_clusters: int = n_clusters
         self.boxes = self.get_bbox()
         self.group, self.anchor_box = self.kmeans()
-        # self.visualize_cluster()
+        self.visualize_cluster()
 
     def get_bbox(self):
         # Load Bbox Dataset
         boxes = PascalVOCDataset().get_bbox()
         boxes = np.array(boxes)
+        boxes[:, 2] = (boxes[:, 2]-boxes[:, 0])
+        boxes[:, 3] = (boxes[:, 3]-boxes[:, 1])
+        boxes[:, 0] = 0
+        boxes[:, 1] = 0
         return boxes
 
     def kmeans(self) -> np.array:
@@ -75,10 +79,11 @@ class DimensionCluster:
         return groups, centroids
 
     def visualize_cluster(self):
-        for i in range(self.n_clusters):
-            for j in range(len(self.group[i])):
-                plt.scatter(self.group[i][j][2], self.group[i][j][3])
-            plt.scatter(self.anchor_box[i][2], self.anchor_box[i][3], marker='x')
+        self.anchor_box = np.array(self.anchor_box)
+        colors = ['red', 'blue', 'yellow', 'green', 'grey']
+        # for idx, color in enumerate(colors):
+        plt.scatter(x=self.boxes[:, 2], y=self.boxes[:, 3])
+        plt.scatter(x=self.anchor_box[:, 2], y=self.anchor_box[:, 3], c='red')
         plt.show()
 
 
