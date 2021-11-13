@@ -6,6 +6,7 @@ import pandas as pd
 import matplotlib.pyplot as plt
 import xml.etree.ElementTree as ET
 from typing import Dict
+from PIL import Image, ImageDraw, ImageFont
 from torch.utils.data import Dataset, DataLoader
 from torchvision import transforms
 from torchvision.datasets import ImageNet, VOCDetection
@@ -15,36 +16,33 @@ import typing
 
 cv2.setNumThreads(0)
 cv2.ocl.setUseOpenCL(False)
+CLASSES = [
+    "aeroplane",
+    "bicycle",
+    "bird",
+    "boat",
+    "bottle",
+    "bus",
+    "car",
+    "cat",
+    "chair",
+    "cow",
+    "diningtable",
+    "dog",
+    "horse",
+    "motorbike",
+    "person",
+    "pottedplant",
+    "sheep",
+    "sofa",
+    "train",
+    "tvmonitor"
+]
 
+COLORS = np.random.randint(0, 255, size=(80, 3), dtype='uint8')
 
 
 class PascalVOCDataset(VOCDetection):
-    CLASSES = [
-        "aeroplane",
-        "bicycle",
-        "bird",
-        "boat",
-        "bottle",
-        "bus",
-        "car",
-        "cat",
-        "chair",
-        "cow",
-        "diningtable",
-        "dog",
-        "horse",
-        "motorbike",
-        "person",
-        "pottedplant",
-        "sheep",
-        "sofa",
-        "train",
-        "tvmonitor"
-    ]
-
-    COLORS = np.random.randint(0, 255, size=(80, 3), dtype='uint8')
-
-
     def __init__(self, root="./data/pascal_voc",
                  image_set="train",
                  year="2012",
@@ -70,16 +68,26 @@ class PascalVOCDataset(VOCDetection):
             label = np.zeros(5)
             label[:] = t['bndbox']['xmin'], t['bndbox']['ymin'], t['bndbox']['xmax'], t['bndbox']['ymax'], CLASSES.index(t['name'])
 
-            targets.append(list(label[:4])) # 바운딩 박스 좌표
-            labels.append(label[4])         # 바운딩 박스 클래스
+            # targets.append(list(label[:4])) # 바운딩 박스 좌표
+            # labels.append(label[4])         # 바운딩 박스 클래스
+
+            targets.append(label)
 
         if self.transforms:
             augmentations = self.transforms(image=image, bboxes=targets)
             image = augmentations['image']
             targets = augmentations['bboxes']
 
-        # return image, label
-        return image, targets, labels
+        # targets = np.concatenate(targets, axis=0)
+        targets = np.array(targets)
+
+        return_dict = {
+            'img': image,
+            'annot': targets
+        }
+
+        # return image, targets, labels
+        return return_dict
 
     def parse_voc_xml(self, node: ET.Element) -> Dict[str, typing.Any]:  # xml 파일을 dictionary로 반환
         voc_dict: Dict[str, typing.Any] = {}
