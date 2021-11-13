@@ -18,7 +18,7 @@ class DimensionCluster:
         self.n_clusters: int = n_clusters
         self.boxes = self.get_bbox()
         self.group, self.anchor_box = self.kmeans()
-        self.visualize_cluster()
+        # self.visualize_cluster()
 
     def get_bbox(self):
         # Load Bbox Dataset
@@ -35,11 +35,9 @@ class DimensionCluster:
         max_iteration = 15000
         loss_convergence = 1e-6
         n_boxes: int = len(self.boxes)
-
         # choice init_clusters
         centroids = self.boxes[np.random.choice(n_boxes, self.n_clusters, replace=False)]
         old_loss = 0
-
         while True:
             loss = 0
             groups = []
@@ -81,8 +79,10 @@ class DimensionCluster:
     def visualize_cluster(self):
         self.anchor_box = np.array(self.anchor_box)
         colors = ['red', 'blue', 'yellow', 'green', 'grey']
-        # for idx, color in enumerate(colors):
-        plt.scatter(x=self.boxes[:, 2], y=self.boxes[:, 3])
+        for i in range(len(self.group)):
+            for j in range(len(self.group[i])):
+                plt.scatter(x=self.group[i][j][2], y=self.group[i][j][3], color=colors[i])
+        # plt.scatter(x=self.boxes[:, 2], y=self.boxes[:, 3])
         plt.scatter(x=self.anchor_box[:, 2], y=self.anchor_box[:, 3], c='red')
         plt.show()
 
@@ -112,9 +112,11 @@ class DirectLocation(nn.Module):
         anchor_box = dimension_cluster.kmeans()
         return anchor_box
 
+    @property
+    def get_anchor_box_size(self):
+        return self.anchor_box
+
 
 def main():
     DimensionCluster(n_clusters=5)
 
-
-main()
