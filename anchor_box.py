@@ -86,6 +86,10 @@ class DimensionCluster:
         plt.scatter(x=self.anchor_box[:, 2], y=self.anchor_box[:, 3], c='red')
         plt.show()
 
+    @property
+    def get_anchor_box_size(self):
+        return self.anchor_box
+
 
 class DirectLocation(nn.Module):
     def __init__(self, centroid):
@@ -111,10 +115,6 @@ class DirectLocation(nn.Module):
         dimension_cluster = DimensionCluster(n_clusters=5)
         anchor_box = dimension_cluster.kmeans()
         return anchor_box
-
-    @property
-    def get_anchor_box_size(self):
-        return self.anchor_box
 
 
 def main():
