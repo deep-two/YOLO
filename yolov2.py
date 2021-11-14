@@ -105,9 +105,24 @@ class YOLO(nn.Module):
         score_pred = global_average_pool_reshaped[:, :, :, 5:].contiguous()  
         prob_pred = torch.softmax(score_pred.view(-1, score_pred.size()[-1]), dim=1).view_as(score_pred) 
         
+        
 
+        cx = torch.arange(0,13) * 13
+        cy = torch.arange(0,13) * 13
+        cx, cy = torch.meshgrid(cx, cy)
+        cx, cy = cx.flatten(), cy.flatten()
 
-        #### loss 부분 추가해야함 #####
+        cx_cy = torch.stack((cx, cy), dim=1)
+        pw_ph = torch.FloatTensor([(159.5435024065161, 256.1136616068123),
+                (374.98336557059963, 333.32069632495165),
+                (33.865758320303776, 43.12776412776413),
+                (94.72419468610393, 117.84363978368211),
+                (314.60921501706486, 157.32821387940842)])
+
+        for c_idx in range(len(cx)):
+            for p_idx in range(len(pw_ph)):
+                bbox_pred[:, c_idx, p_idx, :2] = bbox_pred[:, c_idx, p_idx, :2] + cx_cy[c_idx]
+                bbox_pred[:, c_idx, p_idx, 2:] = bbox_pred[:, c_idx, p_idx, 2:] * pw_ph[p_idx]
 
 
         return bbox_pred, iou_pred, prob_pred
