@@ -1,7 +1,7 @@
 from PIL import Image, ImageDraw, ImageFont
 from torchvision.transforms.functional import to_tensor, to_pil_image
-from torch.utils.data import DataLoader
 from utils.datasets import PascalVOCDataset
+from torch.utils.data import DataLoader
 import matplotlib.pyplot as plt
 import numpy as np
 import torch

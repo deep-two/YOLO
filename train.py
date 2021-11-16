@@ -5,12 +5,16 @@ import os
 import random
 import sys
 import time
-
 import numpy as np
+import utils.config as cfg
+
+from torch.utils.data import DataLoader
+from utils.datasets import PascalVOCDataset
+from torch.utils.data import DataLoader
+
 import yaml
 
 from tensorboardX import SummaryWriter
-
 
 log_dir = '/log'
 writer = SummaryWriter(log_dir)
@@ -23,7 +27,7 @@ def parse_args():
 
     parser.add_argument('--dataset', dest='dataset',
                       help='training dataset',
-                      default='pascal_voc', type=str)
+                      default='./data/pascal_voc', type=str)
     
     parser.add_argument('--cfg', dest='cfg_file',
                       help='optional config file',
@@ -45,8 +49,8 @@ def parse_args():
     return args
 
 
-def train(num_epoch, start_epoch=1, learning_rate, step=1, log_dir
-          model, writer, device, validation_epoch=3, train_loader, validation_loader):
+def train(num_epoch=10, start_epoch=1, learning_rate=0.1, step=1, log_dir='',
+          model, writer, device, validation_epoch=3, train_loader=None, validation_loader=None):
     
     model = model.to(device)
     min_valid_loss = 1.0
@@ -122,9 +126,29 @@ def train(num_epoch, start_epoch=1, learning_rate, step=1, log_dir
             pass
         
         
-
-
-        
 if __name__ == '__main__':
-    args = parse_args() 
-    train()
+    args = parse_args()
+
+    pascal_train_dataset = PascalVOCDataset(
+        image_set="train",
+        root=args.dataset
+    )
+
+    pascal_train_dataloader = DataLoader(
+        pascal_train_dataset,
+        batch_size=64,
+        shuffle=True,
+        collate_fn=pascal_train_dataset.collater
+    )
+
+    train_features, train_labels = next(iter(pascal_train_dataloader))
+
+    print(f"Feature batch shape: {train_features.size()}")
+    print(f"Labels batch shape: {train_labels.size()}")
+
+    # label = train_labels[0]
+    # print(f"Label: {label}")
+
+    train(
+        train_loader=pascal_train_dataloader,
+    )
