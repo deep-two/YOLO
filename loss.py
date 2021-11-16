@@ -1,3 +1,4 @@
+from cv2 import moments
 import torch
 
 def bbox_iou(inbox1, inbbox2):
@@ -32,7 +33,7 @@ def bbox_iou(inbox1, inbbox2):
 
 def match(outputs, gts):
     result = -torch.ones(outputs.shape)
-    iou = -torch.ones(outputs.shape[0])
+    res_iou = -torch.ones(outputs.shape[0])
     thresh = 0.5
 
     for gt in gts:
@@ -43,24 +44,28 @@ def match(outputs, gts):
             if max_iou < iou and iou > thresh:
                 max_iou = iou
                 max_iou_idx = i
-        result[max_iou_idx] = gt
-        iou[max_iou_idx] = max_iou
+        if max_iou_idx > -1:
+            result[max_iou_idx] = gt
+            res_iou[max_iou_idx] = max_iou
             
-    return result, iou
+    return result, res_iou
 
-def get_loss(outputs: torch, gts, lambda_coordi=5, lambda_nobody = 0.5):
-    # Todo #########################################
-    # 1. reshape gts (same shape with pred_box + reduction(ex. 32))
-    # 2. match outputs and gts (by best iou, same shape of all outputs)
-    # 3. non-for structure
-    ################################################
-
-    class_num = 5
+def get_loss(outputs, gts, class_num=20, lambda_coordi=5, lambda_nobody = 0.5):
     loss_list = []
     for batch in range(outputs.shape[0]):
         pred_boxes = outputs[batch].view([-1,5+class_num])
 
-        matched_gt, mask = match(pred_boxes, gts)
+        gt = gts[batch]
+        gt_boxes = torch.zeros([len(gt), 5+class_num])
+        gt_boxes[:, 4] = 1
+        gt_boxes[:, 0] = (gt[:, 0] + gt[:, 2]) / 2
+        gt_boxes[:, 1] = (gt[:, 1] + gt[:, 3]) / 2
+        gt_boxes[:, 2] = gt[:, 2] - gt[:, 0]
+        gt_boxes[:, 3] = gt[:, 3] - gt[:, 1]
+        gt_boxes[:, 5:] = torch.nn.functional.one_hot(gt[:, 4].to(torch.int64), num_classes=class_num)
+        
+        matched_gt, mask = match(pred_boxes, gt_boxes)
+        print(mask)
 
         coordi_error = 0
         conf_error = 0
@@ -89,4 +94,29 @@ def get_loss(outputs: torch, gts, lambda_coordi=5, lambda_nobody = 0.5):
 
 if __name__ == "__main__":
     # print(bbox_iou(torch.tensor([8,8,4,4]), torch.tensor([1,1,3,3])))
-    get_loss(torch.tensor([[[k*1000 + j * 100 + i for i in range(1, 21)] for j in range(1,4)] for k in range(1,4)]), None)
+    # get_loss(torch.tensor([[[k*1000 + j * 100 + i for i in range(1, 21)] for j in range(1,4)] for k in range(1,4)]), None)
+
+    from torch.utils.data import DataLoader
+    from utils.datasets import PascalVOCDataset
+    from tqdm import tqdm
+
+    from yolov2 import YOLO
+
+    pascal_train_dataset = PascalVOCDataset(image_set="train", root="./pascal_voc")
+    pascal_train_dataloader = DataLoader(pascal_train_dataset, batch_size=1, shuffle=True, collate_fn=pascal_train_dataset.collater)
+
+    tepoch = tqdm(pascal_train_dataloader, unit="batch")
+
+    for x_train, y_train in tepoch:
+        model = YOLO()
+        x = model(x_train)
+        get_loss(x, y_train)
+        # print(x.shape)
+        print(y_train)
+        break
+
+    # gts = torch.tensor([[[1,2,3,4,1],
+    #         [1,2,3,4,2],
+    #         [1,2,3,4,4],
+    #         [1,2,3,4,10]]])
+    # get_loss(torch.tensor([[[j * 100 + i for i in range(1, 17)] for j in range(1,4)]]), gts, 20)
