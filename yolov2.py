@@ -5,15 +5,17 @@ import torch
 from darknet import Darknet, ReorgLayer
 from anchor_box import DirectLocation
 
-
-class yolov2(nn.Module):
-    def __init__(self, n_class, n_anchor, is_training = True):
-        super(yolov2, self).__init__()
-        self.darknet = Darknet()
-        self.fineGrained = FineGrainedFeature(n_anchor, n_class)
-        self.directlocation = DirectLocation()
-
+class YOLO(nn.Module):
+    def __init__(self, is_training=True):
+        super().__init__()
         self.is_training = is_training
+
+        self.darknet = Darknet(416)
+        self.reorglayer = ReorgLayer(stride=2)
+        
+        self.conv1, c1 = _make_layers((512*(2*2) + 1024), [(1024, 3)])
+        self.conv2 = Conv2d(c1, 125, 1, 1, relu=False)
+        self.global_average_pool = nn.AvgPool2d((1, 1))
 
     def nms(dets, thresh):
         """
@@ -47,39 +49,6 @@ class yolov2(nn.Module):
             order = order[inds + 1]
 
         return keep
-
-    def forward(self, input):
-        x5, x6 = self.darknet(input)
-        x = self.fineGrained(x5, x6)
-        x = self.directlocation(x)
-
-        if self.is_training:
-            return x
-        else:
-            self.nms(x, 0.5)
-            return
-
-
-######지환#######
-
-class YOLO(nn.Module):
-    def __init__(self ):
-        super().__init__()
-        self.darknet = Darknet(416)
-        self.reorglayer = ReorgLayer(stride=2)
-        
-        self.conv1, c1 = _make_layers((512*(2*2) + 1024), [(1024, 3)])
-        self.conv2 = Conv2d(c1, 125, 1, 1, relu=False)
-        self.global_average_pool = nn.AvgPool2d((1, 1))
-        
-        # train
-        self.bbox_loss = None
-        self.iou_loss = None
-        self.cls_loss = None
-
-
-    def loss(self):
-        return self.bbox_loss + self.iou_loss + self.cls_loss
 
 
     def forward(self, x):
@@ -124,8 +93,12 @@ class YOLO(nn.Module):
                 bbox_pred[:, c_idx, p_idx, :2] = bbox_pred[:, c_idx, p_idx, :2] + cx_cy[c_idx]
                 bbox_pred[:, c_idx, p_idx, 2:] = bbox_pred[:, c_idx, p_idx, 2:] * pw_ph[p_idx]
 
-
-        return bbox_pred, iou_pred, prob_pred
+        if self.is_training:
+            return torch.cat((bbox_pred, iou_pred, prob_pred), dim=-1)
+            # return bbox_pred, iou_pred, prob_pred
+        else:
+            res = self.nms(x, 0.5)
+            return res
 
 
 
