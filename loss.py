@@ -58,10 +58,10 @@ def get_loss(outputs, gts, class_num=20, lambda_coordi=5, lambda_nobody = 0.5):
         gt = gts[batch]
         gt_boxes = torch.zeros([len(gt), 5+class_num])
         gt_boxes[:, 4] = 1
-        gt_boxes[:, 0] = (gt[:, 0] + gt[:, 2]) / 2
-        gt_boxes[:, 1] = (gt[:, 1] + gt[:, 3]) / 2
-        gt_boxes[:, 2] = gt[:, 2] - gt[:, 0]
-        gt_boxes[:, 3] = gt[:, 3] - gt[:, 1]
+        gt_boxes[:, 0] = (gt[:, 0] + gt[:, 2]) / 2 / 32
+        gt_boxes[:, 1] = (gt[:, 1] + gt[:, 3]) / 2 /32
+        gt_boxes[:, 2] = (gt[:, 2] - gt[:, 0]) / 32
+        gt_boxes[:, 3] = (gt[:, 3] - gt[:, 1]) / 32
         gt_boxes[:, 5:] = torch.nn.functional.one_hot(gt[:, 4].to(torch.int64), num_classes=class_num)
         
         matched_gt, mask = match(pred_boxes, gt_boxes)
