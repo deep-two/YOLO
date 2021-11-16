@@ -65,15 +65,16 @@ pascal_train_dataloader = DataLoader(
     collate_fn=pascal_train_dataset.collater
 )
 
-for i, data in enumerate(pascal_train_dataloader):
-    with torch.no_grad():
-        print(len(data))
-        print("### data[0] ### ")
-        print(data[0])
-        print("\n\n\n")
-        print("### data[1] ### ")
-        print(data[1])
-        break
-        # inputs = Variable(inputs)
-        # targets = Variable(targets)
-        # print("targets.data", targets.item())
+train_features, train_labels = next(iter(pascal_train_dataloader))
+
+print(f"Feature batch shape: {train_features.size()}")
+print(f"Labels batch shape: {train_labels.size()}")
+
+img = train_features[0].squeeze()
+permuted_img = img.permute(1, 2, 0) / 255
+plt.imshow(permuted_img)
+# print(permuted_img)
+
+label = train_labels[0]
+plt.show()
+print(f"Label: {label}")
