@@ -12,7 +12,6 @@ import yaml
 from tensorboardX import SummaryWriter
 
 
-
 log_dir = '/log'
 writer = SummaryWriter(log_dir)
 
@@ -44,7 +43,6 @@ def parse_args():
     parser.add_argument('-f')
     args = parser.parse_args()
     return args
-
 
 
 def train(num_epoch, start_epoch=1, learning_rate, step=1, log_dir

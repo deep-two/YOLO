@@ -55,7 +55,9 @@ class PascalVOCDataset(VOCDetection):
 
     def __getitem__(self, index):
         # path, label = self.samples[index]
-        image = np.array(Image.open(self.images[index]).convert('RGB'))
+        input_size = (416, 416)
+        pillow_image = Image.open(self.images[index]).convert('RGB')
+        image = np.array(pillow_image.resize(input_size))
         # image = cv2.imread(self.images[index])
         # image = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
 
@@ -88,6 +90,23 @@ class PascalVOCDataset(VOCDetection):
 
         # return image, targets, labels
         return return_dict
+
+    def collater(self, data):
+        imgs = [s['img'] for s in data]
+        annots = [s['annot'] for s in data]
+        max_num_annots = max(annot.shape[0] for annot in annots)
+
+        if max_num_annots > 0:
+            annot_padded = torch.ones((len(annots), max_num_annots, 5)) * -1
+            for idx, annot in enumerate(annots):
+                if annot.shape[0] > 0:
+                    annot_padded[idx, :annot.shape[0], :] = torch.FloatTensor(annot)
+        else:
+            annot_padded = torch.ones((len(annots), 1, 5)) * -1
+        imgs = torch.from_numpy(np.stack(imgs, axis=0)).to(torch.float32)
+        imgs = imgs.permute(0, 3, 1, 2)
+        return imgs, annot_padded
+
 
     def parse_voc_xml(self, node: ET.Element) -> Dict[str, typing.Any]:  # xml 파일을 dictionary로 반환
         voc_dict: Dict[str, typing.Any] = {}

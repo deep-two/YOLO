@@ -4,6 +4,8 @@ from torch.utils.data import DataLoader
 from utils.datasets import PascalVOCDataset
 import matplotlib.pyplot as plt
 import numpy as np
+import torch
+from torch.autograd import Variable
 
 CLASSES = [
     "aeroplane",
@@ -52,12 +54,26 @@ def show(img, targets, labels):
 pascal_train_dataset = PascalVOCDataset(image_set="train", root="./data/pascal_voc")
 plt.figure(figsize=(10,10))
 
-print(pascal_train_dataset[0])
+# print(pascal_train_dataset[0])
 
-plt.show()
+# plt.show()
 
 pascal_train_dataloader = DataLoader(
-    pascal_train_dataset, batch_size=64, shuffle=True
+    pascal_train_dataset,
+    batch_size=64,
+    shuffle=True,
+    collate_fn=pascal_train_dataset.collater
 )
 
-print()
+for i, data in enumerate(pascal_train_dataloader):
+    with torch.no_grad():
+        print(len(data))
+        print("### data[0] ### ")
+        print(data[0])
+        print("\n\n\n")
+        print("### data[1] ### ")
+        print(data[1])
+        break
+        # inputs = Variable(inputs)
+        # targets = Variable(targets)
+        # print("targets.data", targets.item())
