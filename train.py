@@ -12,12 +12,15 @@ from torch.utils.data import DataLoader
 from utils.datasets import PascalVOCDataset
 from torch.utils.data import DataLoader
 
-import yaml
+from loss import get_loss
+from yolov2 import YOLO
 
-from tensorboardX import SummaryWriter
+# import yaml
+
+# from tensorboardX import SummaryWriter
 
 log_dir = '/log'
-writer = SummaryWriter(log_dir)
+# writer = SummaryWriter(log_dir)
 
 def parse_args():
     """
@@ -49,12 +52,11 @@ def parse_args():
     return args
 
 
-def train(num_epoch=10, start_epoch=1, learning_rate=0.1, step=1, log_dir='',
-          model, writer, device, validation_epoch=3, train_loader=None, validation_loader=None):
+def train(model, writer, device, num_epoch=10, start_epoch=1, learning_rate=0.1, step=1, log_dir='', validation_epoch=3, train_loader=None, validation_loader=None):
     
     model = model.to(device)
     min_valid_loss = 1.0
-    criterion = nn.CrossEntropyLoss()
+    criterion = get_loss
     # optimizer = torch.optim.SGD(params=model.parameters(), lr= learning_rate, weight_decay=1e-3)
     optimizer = torch.optim.Adam(model.parameters(), lr=learning_rate, weight_decay=1e-3)
 
@@ -149,6 +151,11 @@ if __name__ == '__main__':
     # label = train_labels[0]
     # print(f"Label: {label}")
 
+    if args.cuda is True:
+        device = "cuda"
+    else:
+        device = "cpu"
+
     train(
-        train_loader=pascal_train_dataloader,
+        model=YOLO(), writer=None, device=device, train_loader=pascal_train_dataloader, 
     )
