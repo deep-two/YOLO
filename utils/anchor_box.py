@@ -1,13 +1,8 @@
-import os
-from PIL import Image
-from typing import List
-
 import numpy as np
 import matplotlib.pyplot as plt
 from torch import rand, sigmoid, exp, nn
-from torchvision import transforms
 
-from loss import bbox_iou
+from model.loss import bbox_iou
 from utils.datasets import PascalVOCDataset
 
 np.random.seed(42)
