@@ -1,18 +1,15 @@
 import collections
+import typing
+import xml.etree.ElementTree as ET
+from typing import Dict
 
 import cv2
 import numpy as np
 import pandas as pd
-import matplotlib.pyplot as plt
-import xml.etree.ElementTree as ET
-from typing import Dict
-from PIL import Image, ImageDraw, ImageFont
-from torch.utils.data import Dataset, DataLoader
-from torchvision import transforms
-from torchvision.datasets import ImageNet, VOCDetection
-from torchvision.io import read_image
 import torch
-import typing
+from PIL import Image
+from torch.utils.data import Dataset
+from torchvision.datasets import VOCDetection
 
 cv2.setNumThreads(0)
 cv2.ocl.setUseOpenCL(False)
@@ -47,7 +44,7 @@ class PascalVOCDataset(VOCDetection):
                  image_set="train",
                  year="2012",
                  download=False,
-                 transform=None):
+                 transform=None) :
         super().__init__(root=root, image_set=image_set, download=download, transform=transform)
 
     def __len__(self):
@@ -90,6 +87,7 @@ class PascalVOCDataset(VOCDetection):
 
         # return image, targets, labels
         return return_dict
+
 
     def collater(self, data):
         imgs = [s['img'] for s in data]

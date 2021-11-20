@@ -74,8 +74,6 @@ class YOLO(nn.Module):
         score_pred = global_average_pool_reshaped[:, :, :, 5:].contiguous()  
         prob_pred = torch.softmax(score_pred.view(-1, score_pred.size()[-1]), dim=1).view_as(score_pred) 
         
-        
-
         cx = torch.arange(0,13) * 13
         cy = torch.arange(0,13) * 13
         cx, cy = torch.meshgrid(cx, cy)
