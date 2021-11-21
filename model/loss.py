@@ -1,4 +1,5 @@
 # from cv2 import moments # Error with this line
+from cv2 import mean
 import torch
 
 def bbox_iou(inbox1, inbbox2):
@@ -51,11 +52,13 @@ def match(outputs, gts):
     return result, res_iou
 
 def get_loss(outputs, gts, class_num=20, lambda_coordi=5, lambda_nobody = 0.5):
-    loss_list = []
+    error_sum = 0
     for batch in range(outputs.shape[0]):
         pred_boxes = outputs[batch].view([-1,5+class_num])
 
         gt = gts[batch]
+        gt_mask = torch.where(gt[:, -1] == -1, False, True)
+        gt = gt[gt_mask]
         gt_boxes = torch.zeros([len(gt), 5+class_num])
         gt_boxes[:, 4] = 1
         gt_boxes[:, 0] = (gt[:, 0] + gt[:, 2]) / 2 / 32
@@ -65,7 +68,6 @@ def get_loss(outputs, gts, class_num=20, lambda_coordi=5, lambda_nobody = 0.5):
         gt_boxes[:, 5:] = torch.nn.functional.one_hot(gt[:, 4].to(torch.int64), num_classes=class_num)
         
         matched_gt, mask = match(pred_boxes, gt_boxes)
-        print(mask)
 
         coordi_error = 0
         conf_error = 0
@@ -84,9 +86,9 @@ def get_loss(outputs, gts, class_num=20, lambda_coordi=5, lambda_nobody = 0.5):
                 conf_error += torch.square(pred_boxes[idx][4]) * lambda_nobody
 
         error = lambda_coordi * coordi_error + conf_error + class_error
-        loss_list.append(error)
+        error_sum += error
 
-    return sum(loss_list)
+    return error_sum
 
     
     

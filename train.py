@@ -141,12 +141,13 @@ def train(config):
             outputs = model(x_train)
             optimizer.zero_grad()
             loss = criterion(outputs, y_train)
+            print(loss)
             loss.backward()
             optimizer.step()
 
             acc = (outputs.argmax(dim=1).cpu() == y_train.cpu()).numpy().sum() / len(outputs)
             epoch_acc.append(acc)
-            epoch_loss.append(loss.item())
+            epoch_loss.append(loss)
 
             if step % 10 == 0:
                 writer.add_scalar('train_acc', acc, step)
