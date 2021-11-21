@@ -131,3 +131,9 @@ dmypy.json
 
 # Pyre type checker
 .pyre/
+
+# IDLE
+.idea
+
+# NAS
+.DS_Store
