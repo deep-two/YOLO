@@ -3,18 +3,21 @@ import numpy as np
 import torch
 
 from model.darknet import Darknet, ReorgLayer
+from utils.config import cfg
 
 
 class YOLO(nn.Module):
     def __init__(self, is_training=True):
         super().__init__()
         self.is_training = is_training
+        self.num_class = len(cfg.DATA.CLASSES)
+        self.num_anchors = len(cfg.TRAIN.ANCHOR_BOX_SIZE)
 
-        self.darknet = Darknet(416)
+        self.darknet = Darknet(cfg.TRAIN.IMG_SIZE)
         self.reorglayer = ReorgLayer(stride=2)
         
         self.conv1, c1 = _make_layers((512*(2*2) + 1024), [(1024, 3)])
-        self.conv2 = Conv2d(c1, 125, 1, 1, relu=False)
+        self.conv2 = Conv2d(c1, (self.num_class+5)*self.num_anchors, 1, 1, relu=False)
         self.global_average_pool = nn.AvgPool2d((1, 1))
 
     def nms(dets, thresh):
@@ -63,7 +66,7 @@ class YOLO(nn.Module):
         bsize, _, h, w = global_average_pool.size()
         
         # batch, _, anchors, class_score(20) + iou_score(1) + bbox_pred(4)
-        global_average_pool_reshaped = global_average_pool.permute(0, 2, 3, 1).contiguous().view(bsize, -1, 5, 20 + 5)  
+        global_average_pool_reshaped = global_average_pool.permute(0, 2, 3, 1).contiguous().view(bsize, -1, self.num_anchors, self.num_class + 5)  
 
         # tx, ty, tw, th, to -> sig(tx), sig(ty), exp(tw), exp(th), sig(to)
         xy_pred = torch.sigmoid(global_average_pool_reshaped[:, :, :, 0:2])

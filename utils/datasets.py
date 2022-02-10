@@ -10,31 +10,10 @@ import torch
 from PIL import Image
 from torch.utils.data import Dataset
 from torchvision.datasets import VOCDetection
+from utils.config import cfg
 
 cv2.setNumThreads(0)
 cv2.ocl.setUseOpenCL(False)
-CLASSES = [
-    "aeroplane",
-    "bicycle",
-    "bird",
-    "boat",
-    "bottle",
-    "bus",
-    "car",
-    "cat",
-    "chair",
-    "cow",
-    "diningtable",
-    "dog",
-    "horse",
-    "motorbike",
-    "person",
-    "pottedplant",
-    "sheep",
-    "sofa",
-    "train",
-    "tvmonitor"
-]
 
 COLORS = np.random.randint(0, 255, size=(80, 3), dtype='uint8')
 
@@ -44,7 +23,9 @@ class PascalVOCDataset(VOCDetection):
                  image_set="train",
                  year="2012",
                  download=False,
-                 transform=None) :
+                 transform=None,
+                 input_size=416) :
+        self.input_size = (input_size, input_size)
         super().__init__(root=root, image_set=image_set, download=download, transform=transform)
 
     def __len__(self):
@@ -52,9 +33,8 @@ class PascalVOCDataset(VOCDetection):
 
     def __getitem__(self, index):
         # path, label = self.samples[index]
-        input_size = (416, 416)
         pillow_image = Image.open(self.images[index]).convert('RGB')
-        image = np.array(pillow_image.resize(input_size))
+        image = np.array(pillow_image.resize(self.input_size))
         # image = cv2.imread(self.images[index])
         # image = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
 
@@ -65,7 +45,7 @@ class PascalVOCDataset(VOCDetection):
 
         for t in target['annotation']['object']:
             label = np.zeros(5)
-            label[:] = t['bndbox']['xmin'], t['bndbox']['ymin'], t['bndbox']['xmax'], t['bndbox']['ymax'], CLASSES.index(t['name'])
+            label[:] = t['bndbox']['xmin'], t['bndbox']['ymin'], t['bndbox']['xmax'], t['bndbox']['ymax'], cfg.DATA.CLASSES.index(t['name'])
 
             # targets.append(list(label[:4])) # 바운딩 박스 좌표
             # labels.append(label[4])         # 바운딩 박스 클래스

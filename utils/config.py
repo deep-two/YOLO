@@ -1,6 +1,8 @@
-import os
-import sys
-import numpy as np
+from easydict import EasyDict as edict
+
+__C = edict()
+
+cfg = __C
 
 # VOC_CLASSES = [
 #             "background",
@@ -26,7 +28,10 @@ import numpy as np
 #             "tv/monitor",
 #         ]
 
-VOC_CLASSES = [
+# VOC
+__C.DATA = edict()
+
+__C.DATA.CLASSES = [
     "aeroplane",
     "bicycle",
     "bird",
@@ -49,10 +54,11 @@ VOC_CLASSES = [
     "tvmonitor"
 ]
 
-VOC_COLORS = np.random.randint(0, 255, size=(80, 3), dtype='uint8')
+# __C.DATA.VOC_COLORS = np.random.randint(0, 255, size=(80, 3), dtype='uint8')
 
-
-ANCHOR_BOX_SIZE = [
+__C.TRAIN = edict()
+__C.TRAIN.IMG_SIZE = 416
+__C.TRAIN.ANCHOR_BOX_SIZE = [
     (159.5435024065161, 256.1136616068123),
     (374.98336557059963, 333.32069632495165),
     (33.865758320303776, 43.12776412776413),

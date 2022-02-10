@@ -1,6 +1,7 @@
 import argparse
 import logging
 from configparser import ConfigParser
+from turtle import down
 
 import numpy as np
 import torch
@@ -11,6 +12,7 @@ from tqdm import tqdm
 from model.yolov2 import YOLO
 from model.loss import get_loss
 from utils.datasets import PascalVOCDataset
+from utils.config import cfg
 
 
 # import yaml
@@ -25,9 +27,6 @@ def parse_args():
     parser.add_argument('--dataset', dest='dataset',
                         help='training dataset',
                         default='./data/pascal_voc', type=str)
-    parser.add_argument('--cfg', dest='cfg_file',
-                        help='optional config file',
-                        default='cfgs/vgg16.yml', type=str)
     parser.add_argument('--load_dir', dest='load_dir',
                         help='directory to load models', default="models",
                         type=str)
@@ -56,21 +55,13 @@ def parse_args():
                         help='',
                         default=1e-3)
     parser.add_argument('--batch_size', dest='batch_size',
-                        help='',
+                        help='', type=int,
                         default=64)
     parser.add_argument('--start_epoch', dest='start_epoch',
                         help='',
                         default=0)
 
-    args, remaining_argv = parser.parse_known_args()
-
-    if args.cfg_file:
-        config_parser = ConfigParser()
-        config_parser.read([args.cfg_file])
-        defaults = dict(config_parser.items())
-
-    parser.set_defaults(**defaults)
-    args = parser.parse_args(remaining_argv)
+    args = parser.parse_args()
     return args
 
 
@@ -79,12 +70,14 @@ def train(config):
 
     pascal_train_dataset = PascalVOCDataset(
         image_set="train",
-        root=config.dataset
+        root=config.dataset,
+        input_size= cfg.TRAIN.IMG_SIZE,
     )
 
     pascal_valid_dataset = PascalVOCDataset(
         image_set="val",
-        root=config.dataset
+        root=config.dataset,
+        input_size= cfg.TRAIN.IMG_SIZE,
     )
 
     pascal_train_dataloader = DataLoader(
@@ -141,19 +134,20 @@ def train(config):
             outputs = model(x_train)
             optimizer.zero_grad()
             loss = criterion(outputs, y_train)
-            print(loss)
             loss.backward()
             optimizer.step()
 
-            acc = (outputs.argmax(dim=1).cpu() == y_train.cpu()).numpy().sum() / len(outputs)
-            epoch_acc.append(acc)
+            # acc = (outputs.argmax(dim=1).cpu() == y_train.cpu()).numpy().sum() / len(outputs)
+            # epoch_acc.append(acc)
             epoch_loss.append(loss)
 
             if step % 10 == 0:
-                writer.add_scalar('train_acc', acc, step)
+                # writer.add_scalar('train_acc', acc, step)
                 writer.add_scalar('train_loss', loss.item(), step)
 
-            tepoch.set_postfix(loss=loss.item(), accuracy=100. * acc)
+            tepoch.set_postfix(loss=loss.item()
+            # , accuracy=100. * acc
+            )
             step += 1
 
         print(f"Train. Epoch: {epoch :d}, Loss: {np.mean(epoch_loss):1.5f}, acc: {np.mean(epoch_acc) * 100 :1.5f}%")
