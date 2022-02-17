@@ -1,6 +1,7 @@
 import argparse
 import logging
 from configparser import ConfigParser
+import random
 from turtle import down
 
 import numpy as np
@@ -14,8 +15,12 @@ from model.loss import get_loss
 from utils.datasets import PascalVOCDataset
 from utils.config import cfg
 
-
-# import yaml
+random_seed = 1234
+torch.manual_seed(random_seed)
+np.random.seed(random_seed)
+random.seed(random_seed)
+torch.backends.cudnn.benchmark = False
+torch.backends.cudnn.deterministic = True
 
 
 def parse_args():
@@ -26,7 +31,7 @@ def parse_args():
 
     parser.add_argument('--dataset', dest='dataset',
                         help='training dataset',
-                        default='./data/pascal_voc', type=str)
+                        default='~/projects/dataset', type=str)
     parser.add_argument('--load_dir', dest='load_dir',
                         help='directory to load models', default="models",
                         type=str)
@@ -38,7 +43,7 @@ def parse_args():
                         default=1, type=int)
     parser.add_argument('--learning_rate', dest='learning_rate',
                         help='',
-                        default=0.1)
+                        default=0.001)
     parser.add_argument('--epoch', dest='epoch',
                         help='',
                         default=10)
@@ -56,7 +61,7 @@ def parse_args():
                         default=1e-3)
     parser.add_argument('--batch_size', dest='batch_size',
                         help='', type=int,
-                        default=64)
+                        default=8)
     parser.add_argument('--start_epoch', dest='start_epoch',
                         help='',
                         default=0)
@@ -131,6 +136,7 @@ def train(config):
             x_train = x_train.to(device)
             y_train = y_train.to(device)
 
+            model.zero_grad()
             outputs = model(x_train)
             optimizer.zero_grad()
             loss = criterion(outputs, y_train)

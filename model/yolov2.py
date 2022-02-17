@@ -64,6 +64,8 @@ class YOLO(nn.Module):
         global_average_pool = self.global_average_pool(conv2)
 
         bsize, _, h, w = global_average_pool.size()
+        img_h, img_w = x.shape[2:]
+        cfg.TRAIN.FEATURE_STRIDE = img_w / w
         
         # batch, _, anchors, class_score(20) + iou_score(1) + bbox_pred(4)
         global_average_pool_reshaped = global_average_pool.permute(0, 2, 3, 1).contiguous().view(bsize, -1, self.num_anchors, self.num_class + 5)  
@@ -77,17 +79,13 @@ class YOLO(nn.Module):
         score_pred = global_average_pool_reshaped[:, :, :, 5:].contiguous()  
         prob_pred = torch.softmax(score_pred.view(-1, score_pred.size()[-1]), dim=1).view_as(score_pred) 
         
-        cx = torch.arange(0,13) * 13
-        cy = torch.arange(0,13) * 13
+        cx = torch.arange(0,w)
+        cy = torch.arange(0,h)
         cx, cy = torch.meshgrid(cx, cy)
         cx, cy = cx.flatten(), cy.flatten()
 
         cx_cy = torch.stack((cx, cy), dim=1)
-        pw_ph = torch.FloatTensor([(159.5435024065161, 256.1136616068123),
-                (374.98336557059963, 333.32069632495165),
-                (33.865758320303776, 43.12776412776413),
-                (94.72419468610393, 117.84363978368211),
-                (314.60921501706486, 157.32821387940842)])
+        pw_ph = torch.FloatTensor(cfg.TRAIN.ANCHOR_BOX_SIZE) / cfg.TRAIN.FEATURE_STRIDE
 
         for c_idx in range(len(cx)):
             for p_idx in range(len(pw_ph)):
