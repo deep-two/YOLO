@@ -1,7 +1,6 @@
 import argparse
 import logging
 from configparser import ConfigParser
-import random
 from turtle import down
 
 import numpy as np
@@ -15,13 +14,6 @@ from model.loss import get_loss
 from utils.datasets import PascalVOCDataset
 from utils.config import cfg
 
-random_seed = 1234
-torch.manual_seed(random_seed)
-np.random.seed(random_seed)
-random.seed(random_seed)
-torch.backends.cudnn.benchmark = False
-torch.backends.cudnn.deterministic = True
-
 
 def parse_args():
     """
@@ -31,7 +23,7 @@ def parse_args():
 
     parser.add_argument('--dataset', dest='dataset',
                         help='training dataset',
-                        default='~/projects/dataset', type=str)
+                        default='./data/pascal_voc', type=str)
     parser.add_argument('--load_dir', dest='load_dir',
                         help='directory to load models', default="models",
                         type=str)
