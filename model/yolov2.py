@@ -84,8 +84,8 @@ class YOLO(nn.Module):
         cx, cy = torch.meshgrid(cx, cy)
         cx, cy = cx.flatten(), cy.flatten()
 
-        cx_cy = torch.stack((cx, cy), dim=1)
-        pw_ph = torch.FloatTensor(cfg.TRAIN.ANCHOR_BOX_SIZE) / cfg.TRAIN.FEATURE_STRIDE
+        cx_cy = torch.stack((cx, cy), dim=1).type_as(score_pred)
+        pw_ph = torch.FloatTensor(cfg.TRAIN.ANCHOR_BOX_SIZE).type_as(score_pred) / cfg.TRAIN.FEATURE_STRIDE
 
         for c_idx in range(len(cx)):
             for p_idx in range(len(pw_ph)):
