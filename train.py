@@ -23,7 +23,7 @@ def parse_args():
 
     parser.add_argument('--dataset', dest='dataset',
                         help='training dataset',
-                        default='./data/pascal_voc', type=str)
+                        default='./data', type=str)
     parser.add_argument('--load_dir', dest='load_dir',
                         help='directory to load models', default="models",
                         type=str)
@@ -35,7 +35,7 @@ def parse_args():
                         default=1, type=int)
     parser.add_argument('--learning_rate', dest='learning_rate',
                         help='',
-                        default=0.001)
+                        default=1e-3)
     parser.add_argument('--epoch', dest='epoch',
                         help='',
                         default=10)
@@ -50,10 +50,10 @@ def parse_args():
                         default=1.0)
     parser.add_argument('--weight_decay', dest='weight_decay',
                         help='',
-                        default=1e-3)
+                        default=0.1)
     parser.add_argument('--batch_size', dest='batch_size',
                         help='', type=int,
-                        default=8)
+                        default=64)
     parser.add_argument('--start_epoch', dest='start_epoch',
                         help='',
                         default=0)
@@ -137,7 +137,7 @@ def train(config):
 
             # acc = (outputs.argmax(dim=1).cpu() == y_train.cpu()).numpy().sum() / len(outputs)
             # epoch_acc.append(acc)
-            epoch_loss.append(loss)
+            epoch_loss.append(loss.item())
 
             if step % 10 == 0:
                 # writer.add_scalar('train_acc', acc, step)

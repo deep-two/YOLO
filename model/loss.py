@@ -99,22 +99,16 @@ def get_loss(outputs, gts, class_num=20, lambda_coordi=5, lambda_nobody = 0.5):
         class_error = 0
         for idx in range(len(mask)):
             if mask[idx] > -1:
-                coordi_error += torch.square(pred_boxes[idx][0] - matched_gt[idx][0]) # x
-                coordi_error += torch.square(pred_boxes[idx][1] - matched_gt[idx][1]) # y
-                coordi_error += torch.square(torch.sqrt(pred_boxes[idx][2]) - torch.sqrt(matched_gt[idx][2])) # w
-                coordi_error += torch.square(torch.sqrt(pred_boxes[idx][3]) - torch.sqrt(matched_gt[idx][3])) # h
+                coordi_error += torch.square(pred_boxes[idx][0] - matched_gt[idx][0]).detach() # x
+                coordi_error += torch.square(pred_boxes[idx][1] - matched_gt[idx][1]).detach() # y
+                coordi_error += torch.square(torch.sqrt(pred_boxes[idx][2]) - torch.sqrt(matched_gt[idx][2])).detach() # w
+                coordi_error += torch.square(torch.sqrt(pred_boxes[idx][3]) - torch.sqrt(matched_gt[idx][3])).detach() # h
 
-                tmp = matched_gt[idx][4]
-                tmp2 = pred_boxes[idx][4]
-                tmp3 = mask[idx]
-                conf_error += torch.square(pred_boxes[idx][4] - matched_gt[idx][4])
+                conf_error += torch.square(pred_boxes[idx][4] - matched_gt[idx][4]).detach()
 
                 class_error += torch.sum(torch.square(pred_boxes[idx][5:] - matched_gt[idx][5:]))
             else:
-                tmp = matched_gt[idx][4]
-                tmp2 = pred_boxes[idx][4]
-                tmp3 = mask[idx]
-                conf_error += torch.square(pred_boxes[idx][4] - matched_gt[idx][4]) * lambda_nobody
+                conf_error += torch.square(pred_boxes[idx][4] - matched_gt[idx][4]).detach() * lambda_nobody
 
         error = lambda_coordi * coordi_error + conf_error + class_error
         error_sum += error
