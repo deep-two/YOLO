@@ -148,7 +148,7 @@ def train(config):
             )
             step += 1
 
-        print(f"Train. Epoch: {epoch :d}, Loss: {np.mean(epoch_loss):1.5f}, acc: {np.mean(epoch_acc) * 100 :1.5f}%")
+        print(f"Train. Epoch: {epoch :d}, Loss: {np.mean(epoch_loss):1.5f}")
 
         if epoch % config.validation_epoch == 0:
             validation_loss = []
@@ -162,18 +162,18 @@ def train(config):
 
                     outputs = model(x_valid)
                     val_loss = criterion(outputs, y_valid)
-                    val_acc = (outputs.argmax(dim=1).cpu() == y_valid.cpu()).numpy().sum() / len(outputs)
+                    # val_acc = (outputs.argmax(dim=1).cpu() == y_valid.cpu()).numpy().sum() / len(outputs)
                     validation_loss.append(val_loss.item())
-                    validation_acc.append(val_acc)
+                    # validation_acc.append(val_acc)
 
             validation_loss = np.mean(validation_loss)
-            validation_acc = np.mean(validation_acc)
+            # validation_acc = np.mean(validation_acc)
 
             # print("Val. Epoch: %d , val_loss: % 1.5f, val_acc: %1.5f  \n" % (epoch, validation_loss, validation_acc))
             logger.info(
-                "Val. Epoch: %d , val_loss: % 1.5f, val_acc: %1.5f  \n" % (epoch, int(validation_loss), int(validation_acc)))
+                "Val. Epoch: %d , val_loss: % 1.5f  \n" % (epoch, int(validation_loss)))
 
-            writer.add_scalar('val_acc', validation_acc, step)
+            # writer.add_scalar('val_acc', validation_acc, step)
             writer.add_scalar('val_loss', validation_loss, step)
 
             if validation_loss < min_valid_loss:
