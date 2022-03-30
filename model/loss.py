@@ -1,4 +1,5 @@
 # from cv2 import moments # Error with this line
+from socket import INADDR_UNSPEC_GROUP
 from cv2 import mean
 import torch
 from utils.config import cfg
@@ -41,8 +42,7 @@ def bbox_iou(inbox1, inbox2):
     return iou_out
 
 def match(outputs, gts):
-    result = -outputs.new_ones(outputs.shape)
-    res_iou = -torch.ones(outputs.shape[0])
+    result = -outputs.new_zeros(outputs.shape)
     thresh = cfg.TRAIN.MIN_IOU_THRESH
 
     ious = bbox_iou(outputs[:, :4], gts[:, :4])
@@ -50,9 +50,13 @@ def match(outputs, gts):
 
     inds_f = torch.nonzero(max_ious < thresh)
     # max_ious[inds] = 0
-    max_gt_inds[inds_f] = -1
+    max_gt_inds[inds_f] = 0
 
     inds_t = torch.nonzero(max_ious >= thresh)
+    max_gt_inds[inds_t] = 1
+
+    print(len(inds_f))
+    print(len(inds_t))
 
     result[inds_t, 0] = gts[max_gt_inds[inds_t],0]
     result[inds_t, 1] = gts[max_gt_inds[inds_t],1]
@@ -62,18 +66,6 @@ def match(outputs, gts):
     result[:, 4] = max_ious.detach()
     result[inds_t, 5:] = gts[max_gt_inds[inds_t],5:]
 
-    # for gt in gts:
-    #     max_iou_idx = -1
-    #     max_iou = -1
-    #     for i, output in enumerate(outputs):
-    #         iou = bbox_iou(gt[:4], output[:4])
-    #         if max_iou < iou and iou > thresh:
-    #             max_iou = iou
-    #             max_iou_idx = i
-    #     if max_iou_idx > -1:
-    #         result[max_iou_idx] = gt
-    #         res_iou[max_iou_idx] = max_iou
-            
     return result, max_gt_inds
 
 def get_loss(outputs, gts, class_num=20, lambda_coordi=5, lambda_nobody = 0.5):
@@ -94,24 +86,19 @@ def get_loss(outputs, gts, class_num=20, lambda_coordi=5, lambda_nobody = 0.5):
         
         matched_gt, mask = match(pred_boxes, gt_boxes)
 
-        coordi_error = 0
-        conf_error = 0
-        class_error = 0
-        for idx in range(len(mask)):
-            if mask[idx] > -1:
-                coordi_error += torch.square(pred_boxes[idx][0] - matched_gt[idx][0]).detach() # x
-                coordi_error += torch.square(pred_boxes[idx][1] - matched_gt[idx][1]).detach() # y
-                coordi_error += torch.square(torch.sqrt(pred_boxes[idx][2]) - torch.sqrt(matched_gt[idx][2])).detach() # w
-                coordi_error += torch.square(torch.sqrt(pred_boxes[idx][3]) - torch.sqrt(matched_gt[idx][3])).detach() # h
+        len_ = mask.size()[0]
+        # mask = mask.view((-1,1)).expand((len_, class_num+5)).contiguous()
 
-                conf_error += torch.square(pred_boxes[idx][4] - matched_gt[idx][4]).detach()
+        coordi_error_x = torch.sum(torch.square(pred_boxes[:,0] - matched_gt[:,0]) * mask)
+        coordi_error_y = torch.sum(torch.square(pred_boxes[:,1] - matched_gt[:,1]) * mask)
+        coordi_error_w = torch.sum(torch.square(torch.sqrt(pred_boxes[:,2]) - torch.sqrt(matched_gt[:,2])) * mask)
+        coordi_error_h = torch.sum(torch.square(torch.sqrt(pred_boxes[:,3]) - torch.sqrt(matched_gt[:,3])) * mask)
 
-                class_error += torch.sum(torch.square(pred_boxes[idx][5:] - matched_gt[idx][5:]))
-            else:
-                conf_error += torch.square(pred_boxes[idx][4] - matched_gt[idx][4]).detach() * lambda_nobody
+        conf_error = torch.sum(torch.square(pred_boxes[:,4] - matched_gt[:,4]) * torch.where(mask == 0, lambda_nobody, 1.))
+        class_error = torch.sum(torch.square(pred_boxes[:,5:] - matched_gt[:,5:]) * mask.view((-1,1)).expand((len_, class_num)).contiguous())
 
-        error = lambda_coordi * coordi_error + conf_error + class_error
-        error_sum += error
+        error = lambda_coordi * (coordi_error_x + coordi_error_y + coordi_error_w + coordi_error_h) + conf_error + class_error
+        error_sum += error.detach()
 
     return error_sum
 
