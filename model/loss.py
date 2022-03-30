@@ -53,7 +53,7 @@ def match(outputs, gts):
     max_gt_inds[inds_f] = 0
 
     inds_t = torch.nonzero(max_ious >= thresh)
-    max_gt_inds[inds_t] = 1
+    
 
     print(len(inds_f))
     print(len(inds_t))
@@ -66,10 +66,12 @@ def match(outputs, gts):
     result[:, 4] = max_ious.detach()
     result[inds_t, 5:] = gts[max_gt_inds[inds_t],5:]
 
+    max_gt_inds[inds_t] = 1
+
     return result, max_gt_inds
 
 def get_loss(outputs, gts, class_num=20, lambda_coordi=5, lambda_nobody = 0.5):
-    error_sum = 0
+    error_sum = gts.new_zeros(1)
     for batch in range(outputs.shape[0]):
         pred_boxes = outputs[batch].view([-1,5+class_num]).contiguous()
 
@@ -98,7 +100,7 @@ def get_loss(outputs, gts, class_num=20, lambda_coordi=5, lambda_nobody = 0.5):
         class_error = torch.sum(torch.square(pred_boxes[:,5:] - matched_gt[:,5:]) * mask.view((-1,1)).expand((len_, class_num)).contiguous())
 
         error = lambda_coordi * (coordi_error_x + coordi_error_y + coordi_error_w + coordi_error_h) + conf_error + class_error
-        error_sum += error.detach()
+        error_sum += error
 
     return error_sum
 
